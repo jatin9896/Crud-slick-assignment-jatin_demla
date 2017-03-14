@@ -4,10 +4,11 @@ import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Future
 
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class Dependent(id: Int, name: String, relation: String, age: Int)
 
-trait DependentTable {
+trait DependentTable extends EmployeeTable{
   val dependentTableQuery = TableQuery[DependentTable]
 
   class DependentTable(tag: Tag) extends Table[Dependent](tag, "dependent") {
@@ -15,6 +16,7 @@ trait DependentTable {
     val name = column[String]("name")
     val relation = column[String]("relation")
     val age = column[Int]("age")
+    def dependentEmployeeFK = foreignKey("emp_dependent_fk", id, employeeTableQuery)(_.id)
 
     def * = (id, name, relation, age) <>(Dependent.tupled, Dependent.unapply)
   }

@@ -4,6 +4,8 @@ import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Future
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 case class Employee(id: Int, name: String, expr: Double)
 
 trait EmployeeTable {
@@ -28,31 +30,33 @@ trait EmployeeRepo extends EmployeeTable {
   //val db=this.config
   def create: Future[Unit] = db.run(employeeTableQuery.schema.create)
 
-  def insert(emp: Employee): Future[Int] = db.run {
-    employeeTableQuery += emp
-  }
-
   def delete(emp: Double): Future[Int] = {
     val query = employeeTableQuery.filter(x => x.experience === 4.0)
     val action = query.delete
     db.run(action)
   }
 
-  def updateName(id: Int, name: String): Future[Int] = {
-    val query = employeeTableQuery.filter(_.id === id).map(_.name).update(name)
-    db.run(query)
-  }
-  def find(id: Int) =
-    db.run((for (emp <- employeeTableQuery if emp.id === id) yield emp).result.headOption)
-  def upsert(emp: Employee): String ={
-    val search=find(emp.id)
-    search.map(x=> x match {
+  def upsert(emp: Employee): String = {
+    val search = find(emp.id)
+    search.map(x => x match {
       case Some(i) => updateName(i.id, i.name)
       case _ => insert(emp)
     }
     )
     "success"
   }
+
+  def insert(emp: Employee): Future[Int] = db.run {
+    employeeTableQuery += emp
+  }
+
+  def updateName(id: Int, name: String): Future[Int] = {
+    val query = employeeTableQuery.filter(_.id === id).map(_.name).update(name)
+    db.run(query)
+  }
+
+  def find(id: Int) =
+    db.run((for (emp <- employeeTableQuery if emp.id === id) yield emp).result.headOption)
 }
 
 object EmployeeRepo extends EmployeeRepo with SqlDb
