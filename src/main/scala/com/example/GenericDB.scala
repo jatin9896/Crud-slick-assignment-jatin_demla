@@ -8,8 +8,5 @@ trait GenericDB {
 
   val driver:JdbcProfile;
   import driver.api._
-
   val db: Database;
-
-
 }

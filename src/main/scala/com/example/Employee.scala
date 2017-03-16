@@ -30,20 +30,20 @@ trait EmployeeRepo extends EmployeeTable {
   //val db=this.config
   def create: Future[Unit] = db.run(employeeTableQuery.schema.create)
 
-  def delete(emp: Double): Future[Int] = {
-    val query = employeeTableQuery.filter(x => x.experience === 4.0)
+  def delete(id: Int): Future[Int] = {
+    val query = employeeTableQuery.filter(x => x.id === id)
     val action = query.delete
     db.run(action)
   }
 
-  def upsert(emp: Employee): String = {
+  def upsert(emp: Employee): Future[String] = {
     val search = find(emp.id)
     search.map(x => x match {
       case Some(i) => updateName(i.id, i.name)
       case _ => insert(emp)
     }
     )
-    "success"
+   Future.successful("success")
   }
 
   def insert(emp: Employee): Future[Int] = db.run {
@@ -57,6 +57,8 @@ trait EmployeeRepo extends EmployeeTable {
 
   def find(id: Int) =
     db.run((for (emp <- employeeTableQuery if emp.id === id) yield emp).result.headOption)
+
 }
+
 
 object EmployeeRepo extends EmployeeRepo with SqlDb

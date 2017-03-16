@@ -10,7 +10,6 @@ case class Dependent(id: Int, name: String, relation: String, age: Int)
 
 trait DependentTable extends EmployeeTable{
   val dependentTableQuery = TableQuery[DependentTable]
-
   class DependentTable(tag: Tag) extends Table[Dependent](tag, "dependent") {
     val id = column[Int]("emp_id")
     val name = column[String]("name")

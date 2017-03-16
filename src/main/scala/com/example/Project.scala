@@ -40,14 +40,14 @@ trait ProjectRepo extends ProjectTable {
     }
   }
 
-  def upsert(project: Project): String = {
+  def upsert(project: Project): Future[String] = {
     val search = find(project.pid)
     search.map(x => x match {
       case Some(i) => updateName(i.pid, i.pname)
       case _ => insert(project)
     }
     )
-    "success"
+   Future.successful("success")
   }
 
   def insert(project: Project): Future[Int] = db.run {
@@ -62,6 +62,27 @@ trait ProjectRepo extends ProjectTable {
     db.run(query)
   }
 
+  def getAllProjectWithEmployee(): Future[List[(String,String)]] ={
+    val innerJoin = for {
+      (p, e) <- projectTableQuery join employeeTableQuery on (_.e_id === _.id)
+    } yield (p.pname, e.name)
+    db.run(innerJoin.to[List].result)
+  }
+  def insertThenUpdate(project:Project): Future[Int] ={
+    val ins=projectTableQuery+=project
+    val upd=projectTableQuery.filter(_.pid === project.pid).map(_.pname).update(project.pname)
+    val output=ins.andThen(upd).transactionally
+    db.run(output)
+  }
+
+    def insertUsingPlainSql(p:Project): Future[Int] = {
+      val query = sqlu"insert into project values (${p.pid}, ${p.pname}, ${p.e_id});"
+      db.run(query)
+    }
+  def insertProject(project:Project): Project ={
+    projectTableQuery += project
+    project
+  }
 }
 
 object ProjectRepo extends ProjectRepo with SqlDb
